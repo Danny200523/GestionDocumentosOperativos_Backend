@@ -14,10 +14,15 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import os
 from dotenv import load_dotenv
+from pydantic import BaseModel
 
 load_dotenv()
 
 router = APIRouter(tags=["Auth"])
+
+class LoginRequest(BaseModel):
+    email: str
+    password: str
 
 @router.post("/register")
 def register(user: UserCreate, db: Session = Depends(get_session)):
@@ -43,18 +48,17 @@ def register(user: UserCreate, db: Session = Depends(get_session)):
     return {"msg": "Usuario registrado con éxito", "user_id": new_user.id_user}
 
 
-@router.post("/login")
-def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_session)):
-    if not form_data.username or not form_data.password:
+def _do_login(username: str, password: str, db: Session):
+    if not username or not password:
         raise HTTPException(status_code=400, detail="Username y password requeridos")
-    user = db.exec(select(User).where(User.email == form_data.username)).first()
+    user = db.exec(select(User).where(User.email == username)).first()
     if not user:
         raise HTTPException(status_code=401, detail="Credenciales inválidas")
 
     # Verificar intentos de login
-    attempt = db.exec(select(LoginAttempt).where(LoginAttempt.email == form_data.username)).first()
+    attempt = db.exec(select(LoginAttempt).where(LoginAttempt.email == username)).first()
     if not attempt:
-        attempt = LoginAttempt(email=form_data.username)
+        attempt = LoginAttempt(email=username)
         db.add(attempt)
         db.commit()
         db.refresh(attempt)
@@ -62,7 +66,7 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
     if attempt.is_blocked:
         raise HTTPException(status_code=403, detail="Cuenta bloqueada por múltiples intentos fallidos")
 
-    if not verify_password(form_data.password, user.password):
+    if not verify_password(password, user.password):
         if user.role == "operator":
             attempt.attempts += 1
             attempt.last_attempt = datetime.utcnow()
@@ -81,6 +85,15 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
     token = create_access_token(data={"sub": user.email, "role": user.role})
     return {"access_token": token, "token_type": "bearer"}
 
+
+@router.post("/login")
+def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_session)):
+    return _do_login(form_data.username, form_data.password, db)
+
+
+@router.post("/login-json")
+def login_json(payload: LoginRequest, db: Session = Depends(get_session)):
+    return _do_login(payload.email, payload.password, db)
 
 
 @router.post("/reset-password")
