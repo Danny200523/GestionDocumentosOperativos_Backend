@@ -18,6 +18,6 @@ def get_current_user(token: str = Depends(oauth2_scheme), session: Session = Dep
         user = session.exec(select(User).where(User.email == email)).first()
         if not user:
             raise HTTPException(status_code=401, detail="Usuario no encontrado")
-        return {"email": email, "role": role, "department_id": user.id_department}
+        return {"email": email, "name": user.name, "role": role, "department_id": user.id_department}
     except JWTError:
         raise HTTPException(status_code=401, detail="Token inválido o expirado")

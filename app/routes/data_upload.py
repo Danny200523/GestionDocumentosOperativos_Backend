@@ -71,3 +71,22 @@ async def upload_file(file: UploadFile = File(...), user: dict = Depends(get_cur
         "filename": file.filename,
         "saved_tables": saved_tables
     })
+
+@upload_router.get("/documents/")
+def get_uploaded_documents(
+    user: dict = Depends(get_current_user),
+    session: Session = Depends(get_session)
+):
+    department_id = user["department_id"]
+    documents = session.query(ExtratedData).filter_by(department_id=department_id).all()
+    result = [
+        {
+            "id": doc.id_table,
+            "filename": doc.file_name or "Sin nombre",
+            "date": doc.created_at.strftime("%Y-%m-%d %H:%M:%S") if doc.created_at else "Desconocida",
+            "status": doc.status or "Pendiente"
+        }
+        for doc in documents
+    ]
+
+    return result
