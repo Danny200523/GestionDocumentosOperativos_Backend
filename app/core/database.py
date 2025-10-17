@@ -28,6 +28,8 @@ with engine.begin() as conn:
         conn.execute(text("ALTER TABLE extrated_data ADD COLUMN created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP"))
     if 'status' not in existing:
         conn.execute(text("ALTER TABLE extrated_data ADD COLUMN status VARCHAR(50) NOT NULL DEFAULT 'Aprobado'"))
+    if 'user_id' not in existing:
+        conn.execute(text("ALTER TABLE extrated_data ADD COLUMN user_id INT NULL"))
 
 
 def get_session():
