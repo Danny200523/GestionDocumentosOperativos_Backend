@@ -96,8 +96,8 @@ def login_json(payload: LoginRequest, db: Session = Depends(get_session)):
     return _do_login(payload.email, payload.password, db)
 
 
-@router.post("/reset-password")
-def reset_password(token: str, new_password: str, db: Session = Depends(get_session)):
+@router.post("/reset-password-token")
+def reset_password_with_jwt(token: str, new_password: str, db: Session = Depends(get_session)):
     try:
         payload = jwt.decode(token, SECRET_KEY or "", algorithms=[ALGORITHM or "HS256"])
         email: str = payload.get("sub")
