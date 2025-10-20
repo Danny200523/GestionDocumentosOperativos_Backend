@@ -94,3 +94,34 @@ def get_uploaded_documents(
     return unique_docs
 
 
+@upload_router.get("/documents/all")
+def get_all_uploaded_documents(session: Session = Depends(get_session)):
+    documents = session.query(ExtractedData).order_by(ExtractedData.created_at.desc()).all()
+
+    result = [
+        {
+            "id": doc.id_table,
+            "filename": doc.file_name or "Sin nombre",
+            "date": doc.created_at.strftime("%Y-%m-%d %H:%M:%S") if doc.created_at else "Desconocida",
+            "status": doc.status or "Pendiente"
+        }
+        for doc in documents
+    ]
+
+    return result
+
+@upload_router.get("/documents/{document_id}")
+def get_document_by_id(document_id: int, session: Session = Depends(get_session)):
+    document = session.get(ExtractedData, document_id)
+    if not document:
+        raise HTTPException(status_code=404, detail="Documento no encontrado")
+
+    return {
+        "id": document.id_table,
+        "file_name": document.file_name,
+        "status": document.status,
+        "created_at": document.created_at,
+        "department_id": document.department_id,
+        "user_id": document.user_id,
+        "data": document.table_data  
+    }

@@ -106,7 +106,7 @@ Root path: `/home/angel/Desktop/campusdev/proyectos/DocsFlow-Backend`
 │   │   └── Alejandro Escobar J1 Entrevista de Ingreso 2025.pdf
 │   ├── utils/
 │   │   ├── __pycache__/ 🚫 (auto-hidden)
-│   │   ├── email.py
+│   │   ├── 
 │   │   └── pdf_table_extractor.py
 │   └── main.py
 ├── venv/ 🚫 (auto-hidden)

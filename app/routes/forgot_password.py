@@ -13,7 +13,7 @@ from datetime import datetime
 
 load_dotenv()
 # URL base para el enlace de restablecimiento (endpoint para resetear)
-BASE_URL = "http://localhost:8000"
+BASE_URL = "http://localhost:5173/restablecer-password"
 
 router = APIRouter()
 
@@ -55,14 +55,18 @@ async def forgot_password(email: EmailStr = Query(...), session: Session = Depen
 
 
 @router.post("/auth/reset-password")
-def reset_password(token: str = Form(...), new_password: str = Form(...), session: Session = Depends(get_session)):
+def reset_password(
+    token: str = Form(...),
+    new_password: str = Form(...),
+    session: Session = Depends(get_session)
+):
     # Buscar token en la base de datos
     statement = select(ResetPasswordToken).where(ResetPasswordToken.token == token)
     token_obj = session.exec(statement).first()
 
     # Verificar si el token existe
     if not token_obj:
-        raise HTTPException(status_code=400, detail="Token inválido")
+        raise HTTPException(status_code=400, detail="Token inválido o expirado")
 
     # Buscar usuario asociado al token
     user_statement = select(User).where(User.id_user == token_obj.user_id)
@@ -71,10 +75,16 @@ def reset_password(token: str = Form(...), new_password: str = Form(...), sessio
     if not user:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
 
-    # Actualizar contraseña y eliminar token
+    # Encriptar y actualizar la nueva contraseña
     user.password = hash_password(new_password)
     session.add(user)
+
+    # Eliminar token de la tabla para que no se reutilice
     session.delete(token_obj)
+
+    # Confirmar los cambios
     session.commit()
+    session.refresh(user)
 
     return {"msg": "Contraseña actualizada correctamente"}
+
