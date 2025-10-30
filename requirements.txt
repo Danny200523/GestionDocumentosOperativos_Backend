@@ -1,9 +1,9 @@
 # Framework principal
-fastapi
-uvicorn[standard]
+fastapi==0.110.0
+uvicorn[standard]==0.30.0
 
 # ORM y conexión a MySQL
-sqlalchemy
+sqlalchemy==2.0.23
 pymysql
 sqlmodel
 
@@ -11,8 +11,8 @@ sqlmodel
 python-jose[cryptography]
 passlib[bcrypt]
 
-# Validación de datos
-pydantic
+# Validación de datos (versión 1.x compatible)
+pydantic==1.10.13
 
 # Manejo de formularios y uploads
 python-multipart
@@ -25,4 +25,5 @@ pdfplumber
 python-dotenv
 
 # Envío de emails
-fastapi-mail
+fastapi-mail==1.4.1
+
